@@ -1,6 +1,5 @@
 {
   "diary": {
-<<<<<<< HEAD
     "userStoragePath": "./diaries/user",
     "kannaStoragePath": "./diaries/kanna",
     "fileNameFormat": "YYYY-MM-DD.md",
@@ -10,12 +9,6 @@
     "name": "かんな",
     "birthday": "02-14"
   },
-=======
-    "storagePath": "./diaries",
-    "fileNameFormat": "YYYY-MM-DD.md",
-    "encoding": "utf8"
-  },
->>>>>>> origin/main
   "sources": {
     "discord": {
       "enabled": false,
@@ -42,11 +35,7 @@
     }
   },
   "generation": {
-<<<<<<< HEAD
     "aiModel": "zai/glm-4.7",
-=======
-    "aiModel": "gpt-4o-mini",
->>>>>>> origin/main
     "maxTokens": 2000,
     "temperature": 0.8,
     "personality": {
@@ -58,11 +47,7 @@
   "output": {
     "saveToFile": true,
     "postToDiscord": false,
-<<<<<<< HEAD
     "discordChannelId": "1472332732595044544"
-=======
-    "discordChannelId": "1471769660948086785"
->>>>>>> origin/main
   },
   "analysis": {
     "emotionKeywords": {

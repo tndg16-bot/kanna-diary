@@ -24,6 +24,10 @@ export function getDefaultConfig(): Config {
       fileNameFormat: 'YYYY-MM-DD.md',
       encoding: 'utf8'
     },
+    kanna: {
+      name: 'かんな',
+      birthday: '02-14'
+    },
     sources: {
       discord: {
         enabled: false,
