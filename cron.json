@@ -1,0 +1,18 @@
+{
+  "schedule": {
+    "kind": "cron",
+    "expr": "0 10 * * *",
+    "tz": "Asia/Tokyo"
+  },
+  "payload": {
+    "kind": "agentTurn",
+    "message": "Run kanna-diary to generate today's diary.",
+    "model": "zai/glm-4.7"
+  },
+  "sessionTarget": "isolated",
+  "enabled": true,
+  "delivery": {
+    "mode": "announce",
+    "channel": "1471769660948086785"
+  }
+}

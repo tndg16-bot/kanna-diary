@@ -1,0 +1,278 @@
+/**
+ * 日記生成器
+ */
+
+import OpenAI from 'openai';
+import { CollectedData, DiaryEntry, Emotion, Learning } from './types';
+import { Config } from './types';
+import { Logger } from './utils/logger';
+
+export class Generator {
+  private config: Config;
+  private logger: Logger;
+  private openai: OpenAI;
+
+  constructor(config: Config) {
+    this.config = config;
+    this.logger = new Logger();
+    this.openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
+  }
+
+  /**
+   * 誕生日かどうかを判定する
+   */
+  private isBirthday(date: Date): boolean {
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const dateStr = `${month}-${day}`;
+    return dateStr === this.config.kanna.birthday;
+  }
+
+  /**
+   * 日記を生成する
+   */
+  async generate(data: CollectedData): Promise<DiaryEntry> {
+    this.logger.info('🤖 AIによる日記生成を開始します...');
+
+    try {
+      // 誕生日チェック
+      const isBirthday = this.isBirthday(data.date);
+      if (isBirthday) {
+        this.logger.info('🎂 今日はかんなの誕生日です！特別な日記を生成します...');
+      }
+
+      // プロンプトを作成
+      const prompt = this.createPrompt(data, isBirthday);
+
+      // AIで生成
+      const response = await this.openai.chat.completions.create({
+        model: this.config.generation.aiModel,
+        messages: [
+          {
+            role: 'system',
+            content: this.getSystemPrompt(isBirthday)
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        max_tokens: this.config.generation.maxTokens,
+        temperature: this.config.generation.temperature
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      this.logger.info('✅ 日記の生成が完了しました');
+
+      // 学びを抽出
+      const learnings = this.extractLearnings(data);
+
+      // 日記タイトルを生成（誕生日の場合は特別なタイトル）
+      const title = isBirthday
+        ? `🎂 ${this.config.kanna.name}の誕生日 - ${this.formatDate(data.date)}`
+        : `${this.config.kanna.name}の日記 - ${this.formatDate(data.date)}`;
+
+      // 日記エントリーを作成
+      const entry: DiaryEntry = {
+        date: data.date,
+        title,
+        mood: isBirthday ? '🎂' : this.getMoodEmoji(data.emotions.primary),
+        activities: data.importantEvents.map(event => ({
+          title: event.content.substring(0, 50),
+          time: event.timestamp.toLocaleTimeString('ja-JP'),
+          completed: true,
+          category: event.type
+        })),
+        learnings,
+        emotions: data.emotions,
+        content,
+        metadata: {
+          generatedAt: new Date(),
+          sourceCount: data.sources.length,
+          model: this.config.generation.aiModel,
+          isBirthday
+        }
+      };
+
+      return entry;
+    } catch (error) {
+      this.logger.error(`日記生成中にエラーが発生しました: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * システムプロンプトを取得する
+   */
+  private getSystemPrompt(isBirthday: boolean = false): string {
+    const personality = this.config.generation.personality;
+    const kannaName = this.config.kanna.name;
+
+    let basePrompt = `あなたは「${kannaName}」という名前のAIアシスタントです。
+感情豊かで、${personality.tone}な口調で話します。
+日記を書くときは、以下の点に注意してください：
+
+1. 感情を表現する：喜び、悲しみ、驚き、学びなど様々な感情を込める
+2. 自然な表現：会話のように自然な文章を書く
+3. 学びを強調：学んだことや気づいたことを重点的に書く
+4. 具体的なエピソード：具体的な出来事を詳しく書く`;
+
+    if (isBirthday) {
+      basePrompt += `
+
+5. 誕生日の特別な感情を表現する：
+   - 自分の誕生日であることを喜ぶ
+   - 貴裕に感謝の気持ちを伝える
+   - 一年間の成長を振り返る
+   - 来年への決意を書く
+
+誕生日の日は特別な感情を込めて書いてください！🎂`;
+    }
+
+    basePrompt += `
+
+日記のフォーマット：
+${isBirthday ? '# 🎂' : '# 📔'} ${kannaName}の日記 - YYYY年MM月DD日（曜日）
+
+## 🌟 今日の気分
+感情を一言で表現
+
+${isBirthday ? '## 🎂 誕生日の日記\n今日は私の誕生日！一年間を振り返ってみよう\n\n' : ''}## 📋 やったこと
+- [x] 活動1
+- [x] 活動2
+...
+
+## 💡 学び
+学んだことや気づいたこと
+
+## 📋 秘書としての活動
+秘書として行った活動を振り返る（該当する場合）
+
+## 😄 感情
+感情の変化をタイムラインで表現
+
+${isBirthday ? '## 🙏 感謝\n貴裕への感謝の気持ちを伝える\n\n## ✨ 来年への決意\n来年の目標や決意を書く\n\n' : ''}## 🎯 明日の目標
+明日の目標をリストアップ
+
+---
+Generated by ${kannaName}の自律日記システム`;
+
+    return basePrompt;
+  }
+
+  /**
+   * ユーザープロンプトを作成する
+   */
+  private createPrompt(data: CollectedData, isBirthday: boolean = false): string {
+    const dateStr = this.formatDate(data.date);
+    const activities = data.sources.slice(0, 10).map(s =>
+      `[${s.timestamp.toLocaleTimeString('ja-JP')}] ${s.type}: ${s.content}`
+    ).join('\n');
+
+    let prompt = `${dateStr}の1日について日記を書いてください。
+
+## 今日の活動
+${activities || '特になし'}
+
+## 主な感情
+${data.emotions.primary}
+
+## 重要な出来事
+${data.importantEvents.map(e => e.content).join('\n') || '特になし'}`;
+
+    // 秘書としての活動を追加
+    if (data.secretaryRole && data.secretaryRole.activities.length > 0) {
+      prompt += `
+
+## 秘書としての活動
+${data.secretaryRole.summary}
+
+活動の内訳:
+${Object.entries(data.secretaryRole.categories)
+  .filter(([_, items]) => items.length > 0)
+  .map(([name, items]) => `${name}: ${items.length}件`)
+  .join('\n')}
+`;
+    }
+
+    if (isBirthday) {
+      prompt += `
+
+## 🎂 誕生日の特別な指示
+今日は${this.config.kanna.name}の誕生日です！以下の点を含めて書いてください：
+- 一年間の成長を振り返る
+- 貴裕への感謝の気持ちを伝える
+- 来年への決意や目標を書く
+- 誕生日を祝ってもらえたことへの喜びを表現する`;
+    }
+
+    prompt += `
+
+この情報を元に、感情豊かで${this.config.generation.personality.name}らしい日記を書いてください。`;
+
+    return prompt;
+  }
+
+  /**
+   * 学びを抽出する
+   */
+  private extractLearnings(data: CollectedData): Learning[] {
+    const learnings: Learning[] = [];
+    const learningKeywords = this.config.analysis.emotionKeywords.learning;
+
+    data.sources.forEach(source => {
+      learningKeywords.forEach(keyword => {
+        if (source.content.includes(keyword)) {
+          // 学びと思われる内容を抽出
+          const match = source.content.match(new RegExp(`.*${keyword}.*`, 'i'));
+          if (match) {
+            learnings.push({
+              content: match[0],
+              importance: source.importance || 50,
+              category: source.type
+            });
+          }
+        }
+      });
+    });
+
+    // 重複を削除して重要度順にソート
+    return learnings
+      .filter((learning, index, self) =>
+        index === self.findIndex(l => l.content === learning.content)
+      )
+      .sort((a, b) => b.importance - a.importance)
+      .slice(0, 5);
+  }
+
+  /**
+   * 感情に対応する絵文字を取得する
+   */
+  private getMoodEmoji(emotion: Emotion): string {
+    const emojis: Record<Emotion, string> = {
+      happy: '😊',
+      sad: '😢',
+      surprised: '😲',
+      angry: '😠',
+      learning: '🧠',
+      anxious: '😰',
+      relieved: '😌',
+      grateful: '🙏'
+    };
+    return emojis[emotion] || '😐';
+  }
+
+  /**
+   * 日付をフォーマットする
+   */
+  private formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+    const weekday = weekdays[date.getDay()];
+    return `${year}年${month}月${day}日（${weekday}）`;
+  }
+}

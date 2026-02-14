@@ -1,0 +1,21 @@
+{
+  "name": "kanna-diary",
+  "version": "1.0.0",
+  "description": "Kanna's Autonomous Diary System - Daily diary generation with reflection, emotion tracking, and improvement goals",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "preview": "node index.js --preview",
+    "test": "node test.js"
+  },
+  "keywords": [
+    "diary",
+    "reflection",
+    "emotion",
+    "improvement",
+    "kanna",
+    "autonomous"
+  ],
+  "author": "Kanna",
+  "license": "MIT"
+}

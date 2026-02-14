@@ -1,0 +1,56 @@
+name: Weekly Reflection
+
+on:
+  schedule:
+    # 毎週日曜日の10:00 UTC（19:00 JST）に実行
+    - cron: '0 10 * * 0'
+  workflow_dispatch:  # 手動実行も可能
+
+jobs:
+  generate-weekly-reflection:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup environment variables
+        run: |
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
+          echo "DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}" >> $GITHUB_ENV
+          echo "DISCORD_CHANNEL_ID=${{ secrets.DISCORD_CHANNEL_ID }}" >> $GITHUB_ENV
+
+      - name: Get current date
+        id: date
+        run: |
+          echo "today=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+          echo "Generating weekly reflection for week ending: $(date +'%Y-%m-%d')"
+
+      - name: Generate Weekly Reflection
+        run: |
+          npx ts-node --transpile-only src/WeeklyReflection.ts ${{ steps.date.outputs.today }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add diaries/weekly/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "📊 Generate weekly reflection for week ending ${{ steps.date.outputs.today }}"
+            git push
+          fi

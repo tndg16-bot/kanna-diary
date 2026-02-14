@@ -1,0 +1,54 @@
+name: Daily Diary Generation
+
+on:
+  schedule:
+    # 毎日10:00 UTC（19:00 JST）に実行
+    - cron: '0 10 * * *'
+  workflow_dispatch:  # 手動実行も可能
+
+jobs:
+  generate-diary:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup environment variables
+        run: |
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
+          echo "DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}" >> $GITHUB_ENV
+
+      - name: Get current date
+        id: date
+        run: |
+          echo "today=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+          echo "Generating diary for today: $(date +'%Y-%m-%d')"
+
+      - name: Generate Daily Diary
+        run: |
+          npx ts-node --transpile-only src/index.ts ${{ steps.date.outputs.today }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add diaries/kanna/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "📝 Generate daily diary for ${{ steps.date.outputs.today }}"
+            git push
+          fi

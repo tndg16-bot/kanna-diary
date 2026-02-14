@@ -1,0 +1,63 @@
+name: Monthly Reflection
+
+on:
+  schedule:
+    # 毎月1日の10:00 UTC（19:00 JST）に実行
+    - cron: '0 10 1 * *'
+  workflow_dispatch:  # 手動実行も可能
+
+jobs:
+  generate-monthly-reflection:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Setup environment variables
+        run: |
+          echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> $GITHUB_ENV
+          echo "DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}" >> $GITHUB_ENV
+      
+      - name: Get current date
+        id: date
+        run: |
+          # 前月の日付を取得（振り返りは前月分を生成）
+          if [ "$(date +%m)" = "01" ]; then
+            YEAR=$(( $(date +%Y) - 1 ))
+            MONTH=12
+          else
+            YEAR=$(date +%Y)
+            MONTH=$(( $(date +%m) - 1 ))
+          fi
+          echo "year=$YEAR" >> $GITHUB_OUTPUT
+          echo "month=$MONTH" >> $GITHUB_OUTPUT
+          echo "Generating reflection for ${YEAR}-${MONTH}"
+      
+      - name: Generate Monthly Reflection
+        run: |
+          npx ts-node --transpile-only scripts/generate-monthly-reflection.ts ${{ steps.date.outputs.year }} ${{ steps.date.outputs.month }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+      
+      - name: Commit and push changes
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add diaries/monthly/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "📊 Generate monthly reflection for ${{ steps.date.outputs.year }}-${{ steps.date.outputs.month }}"
+            git push
+          fi
