@@ -71,7 +71,7 @@ export class MonthlyReflection {
    */
   private async collectDiaryEntries(year: number, month: number): Promise<DiaryEntry[]> {
     const entries: DiaryEntry[] = [];
-    const storagePath = this.config.diary.storagePath;
+    const storagePath = this.config.diary.kannaStoragePath;
 
     if (!fs.existsSync(storagePath)) {
       return entries;
@@ -361,7 +361,7 @@ ${data.secretaryActivities.map(a => `- ${a}`).join('\n') || '特になし'}
    */
   async saveToFile(year: number, month: number, reflection: string): Promise<void> {
     try {
-      const storagePath = this.config.diary.storagePath;
+      const storagePath = this.config.diary.kannaStoragePath;
       const monthlyPath = path.join(storagePath, 'monthly');
 
       // ディレクトリが存在しない場合は作成

@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "schedule": {
     "kind": "cron",
     "expr": "0 10 * * *",
@@ -15,4 +16,13 @@
     "mode": "announce",
     "channel": "1471769660948086785"
   }
+=======
+  "schedules": [
+    {
+      "cron": "0 23 * * *",
+      "command": "cd C:\\Users\\chatg\\.openclaw\\skills\\kanna-diary && node dist/index.js generate",
+      "description": "かんなの自律日記システム - 毎晩23時に日記を生成"
+    }
+  ]
+>>>>>>> origin/main
 }

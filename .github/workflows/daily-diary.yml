@@ -1,0 +1,111 @@
+name: Kanna's Daily Diary Generation
+
+on:
+  # Cron実行：毎日日本時間23時（UTC 14時）
+  schedule:
+    - cron: '0 14 * * *'
+  # 手動実行オプション
+  workflow_dispatch:
+    inputs:
+      date:
+        description: '日付 (YYYY-MM-DD形式、指定な場合は前日)'
+        required: false
+        type: string
+      backfill:
+        description: 'バックフィルモード（7日間バックフィル）'
+        required: false
+        default: 'false'
+        type: string
+
+jobs:
+  generate-diary:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Generate diary
+        run: |
+          # 引数の構築
+          DATE_ARG=""
+          if [[ "${{ inputs.date }}" != "" ]]; then
+            DATE_ARG="--date ${{ inputs.date }}"
+          fi
+          
+          if [[ "${{ inputs.backfill }}" == "true" ]]; then
+            BACKFILL="--backfill"
+          fi
+          
+          # 日記生成の実行
+          echo "=========================================="
+          echo "かんなの自律日記システム"
+          echo "=========================================="
+          echo ""
+          echo "📅 日付: ${{ inputs.date }}"
+          echo "🔄 モード: $([[ "${{ inputs.backfill }}" == "true" ]] && echo "バックフィル" || echo "通常")"
+          echo ""
+          echo "----------------------------------------"
+          echo ""
+          
+          if [[ "$DATE_ARG" != "" ]]; then
+            npm run generate-diary $DATE_ARG $BACKFILL
+          elif [[ "${{ inputs.backfill }}" == "true" ]]; then
+            # バックフィルモード：7日間をバックフィル
+            for i in {1..7}; do
+              BACKFILL_DATE=$(date -d "$i days ago" +"%Y-%m-%d")
+              echo "🔄 $BACKFILL_DATE の日記を生成中..."
+              npm run generate-diary --date "$BACKFILL_DATE"
+              echo "   完了"
+            done
+          else
+            # 通常モード：前日の日記を生成
+            npm run generate-diary
+          fi
+          
+          echo ""
+          echo "----------------------------------------"
+          echo ""
+          echo "✅ 日記生成が完了しました！"
+          
+      - name: Commit and push diary files
+        run: |
+          git config user.name "Kanna Diary Bot"
+          git config user.email "kanna-diary-bot@tndg16-bot.github.com"
+          
+          # 変更があればコミット
+          if [[ -n $(git status --porcelain) ]]; then
+            git add diaries/
+            git commit -m "📔 日記生成: ${{ inputs.date }}"
+            
+            # GitHubにプッシュ
+            git push origin main
+            echo "✅ 日記ファイルをコミット・プッシュしました"
+          else
+            echo "ℹ️ 日記の変更はありません"
+          fi
+      
+      - name: Create summary
+        run: |
+          echo "## 📔 かんなの日記生成"
+          echo ""
+          echo "### 生成結果"
+          echo "- 日付: ${{ inputs.date }}"
+          echo "- モード: $([[ "${{ inputs.backfill }}" == "true" ]] && echo "バックフィル" || echo "通常")"
+          echo "- ステータス: ✅ 完了"
+      
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "❌ 日記生成中にエラーが発生しました"

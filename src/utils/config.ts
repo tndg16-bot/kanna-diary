@@ -19,7 +19,8 @@ export function loadConfig(configPath: string): Config {
 export function getDefaultConfig(): Config {
   return {
     diary: {
-      storagePath: './diaries',
+      userStoragePath: './diaries/user',
+      kannaStoragePath: './diaries/kanna',
       fileNameFormat: 'YYYY-MM-DD.md',
       encoding: 'utf8'
     },
