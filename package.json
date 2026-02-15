@@ -9,7 +9,12 @@
     "test": "node test.js",
     "test:sentiment": "ts-node tests/sentiment-analyzer.test.ts",
     "test:generator": "ts-node tests/generator.test.ts",
-    "test:all": "ts-node tests/sentiment-analyzer.test.ts && ts-node tests/generator.test.ts"
+    "test:all": "ts-node tests/sentiment-analyzer.test.ts && ts-node tests/generator.test.ts",
+    "test:jest": "jest",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src/**/*.ts tests/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts tests/**/*.ts --fix",
+    "type-check": "tsc --noEmit"
   },
   "keywords": [
     "diary",
@@ -24,12 +29,18 @@
   "author": "Kanna",
   "license": "MIT",
   "dependencies": {
-    "openai": "^4.0.0",
-    "dotenv": "^16.0.0"
+    "dotenv": "^16.0.0",
+    "openai": "^4.0.0"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.0.0",
-    "typescript": "^5.0.0",
-    "ts-node": "^10.9.0"
+    "@typescript-eslint/eslint-plugin": "^8.55.0",
+    "@typescript-eslint/parser": "^8.55.0",
+    "eslint": "^8.57.1",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
   }
 }
