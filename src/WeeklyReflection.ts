@@ -27,7 +27,8 @@ export class WeeklyReflectionGenerator {
 
   constructor() {
     this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
+      apiKey: process.env.GLM_API_KEY,
+      baseURL: 'https://open.bigmodel.cn/api/paas/v4/',
     });
     this.kannaStoragePath = path.join(process.cwd(), 'diaries', 'kanna');
     this.userStoragePath = path.join(process.cwd(), 'diaries', 'user');

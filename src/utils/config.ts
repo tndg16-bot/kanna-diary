@@ -63,6 +63,7 @@ export function getDefaultConfig(): Config {
     output: {
       saveToFile: true,
       postToDiscord: false,
+      postAsThread: false,
       discordChannelId: '1472332732595044544'
     },
     analysis: {

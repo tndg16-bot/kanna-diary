@@ -14,7 +14,9 @@
     "test:coverage": "jest --coverage",
     "lint": "eslint src/**/*.ts tests/**/*.ts",
     "lint:fix": "eslint src/**/*.ts tests/**/*.ts --fix",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "generate:weekly": "npx ts-node --transpile-only src/WeeklyReflection.ts",
+    "generate:monthly": "npx ts-node --transpile-only src/MonthlyReflection.ts"
   },
   "keywords": [
     "diary",

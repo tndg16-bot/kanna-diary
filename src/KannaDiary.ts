@@ -74,6 +74,119 @@ export class KannaDiary {
   }
 
   /**
+   * 週次日記を生成する
+   * @param weekStartStr 週の開始日（YYYY-MM-DD）、デフォルトは今週の月曜日
+   */
+  async generateWeekly(weekStartStr?: string): Promise<void> {
+    this.logger.info('📅 週次日記生成を開始します...');
+
+    try {
+      // 週の開始日を取得（デフォルトは今週の月曜日）
+      let weekStart: Date;
+      if (weekStartStr) {
+        weekStart = new Date(weekStartStr);
+      } else {
+        const now = new Date();
+        const dayOfWeek = now.getDay();
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+        weekStart = monday;
+      }
+
+      // 週の終了日（日曜日）
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+
+      this.logger.info(`📅 対象週: ${this.formatDate(weekStart)}〜${this.formatDate(weekEnd)}`);
+
+      // 週のデータを収集
+      this.logger.info('📥 データ収集中...');
+      const collectedData = await this.collector.collectRange(weekStart, weekEnd);
+
+      if (collectedData.sources.length === 0) {
+        this.logger.warn('収集できるデータがありませんでした');
+        return;
+      }
+
+      this.logger.info(`✅ ${collectedData.sources.length}件のデータを収集しました`);
+
+      // 週次日記生成
+      this.logger.info('✍️ 週次日記生成中...');
+      const entry = await (this.generator['generateWeekly'] as any)(collectedData, weekStart, weekEnd);
+
+      // 週次日記保存
+      this.logger.info('💾 週次日記保存中...');
+      await this.writer.write(entry, 'weekly');
+
+      this.logger.info(`✨ 週次日記「${entry.title}」を生成・保存しました！`);
+
+    } catch (error) {
+      this.logger.error(`週次日記生成中にエラーが発生しました: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * 月次日記を生成する
+   * @param yearMonthStr 年月（YYYY-MM）、デフォルトは先月
+   */
+  async generateMonthly(yearMonthStr?: string): Promise<void> {
+    this.logger.info('📆 月次日記生成を開始します...');
+
+    try {
+      // 月の開始日・終了日を取得
+      let monthStart: Date;
+      if (yearMonthStr) {
+        const [year, month] = yearMonthStr.split('-').map(Number);
+        monthStart = new Date(year, month - 1, 1);
+      } else {
+        // デフォルトは先月
+        const now = new Date();
+        monthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      }
+
+      const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
+
+      this.logger.info(`📅 対象月: ${monthStart.getFullYear()}年${monthStart.getMonth() + 1}月`);
+
+      // 月のデータを収集
+      this.logger.info('📥 データ収集中...');
+      const collectedData = await this.collector.collectRange(monthStart, monthEnd);
+
+      if (collectedData.sources.length === 0) {
+        this.logger.warn('収集できるデータがありませんでした');
+        return;
+      }
+
+      this.logger.info(`✅ ${collectedData.sources.length}件のデータを収集しました`);
+
+      // 月次日記生成
+      this.logger.info('✍️ 月次日記生成中...');
+      const entry = await (this.generator['generateMonthly'] as any)(collectedData, monthStart, monthEnd);
+
+      // 月次日記保存
+      this.logger.info('💾 月次日記保存中...');
+      await this.writer.write(entry, 'monthly');
+
+      this.logger.info(`✨ 月次日記「${entry.title}」を生成・保存しました！`);
+
+    } catch (error) {
+      this.logger.error(`月次日記生成中にエラーが発生しました: ${error}`);
+      throw error;
+    }
+  }
+
+  /**
+   * 日付をフォーマットする
+   */
+  private formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  /**
    * 特定の日付の日記を表示する
    */
   async show(dateStr: string): Promise<void> {

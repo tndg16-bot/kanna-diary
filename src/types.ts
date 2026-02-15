@@ -28,6 +28,7 @@ export interface Config {
   output: {
     saveToFile: boolean;
     postToDiscord: boolean;
+    postAsThread: boolean;    // スレッドとして投稿するかどうか
     discordChannelId?: string;
   };
   analysis: {
