@@ -24,7 +24,7 @@ export class Writer {
   /**
    * 日記を保存する
    */
-  async write(entry: DiaryEntry): Promise<void> {
+  async write(entry: DiaryEntry, type?: 'daily' | 'weekly' | 'monthly'): Promise<void> {
     // ファイル保存
     if (this.config.output.saveToFile) {
       await this.saveToFile(entry);
