@@ -16,7 +16,7 @@ export class ObsidianReader implements SourceReader {
     this.logger = new Logger();
   }
 
-  async read(date: Date): Promise<SourceData[]> {
+  async read(_date: Date): Promise<SourceData[]> {
     const data: SourceData[] = [];
 
     // TODO: Obsidian APIを実装

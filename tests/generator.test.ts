@@ -245,7 +245,7 @@ async function runTests() {
     const diaryEntry = await generator.generate(mockData);
 
     const content = diaryEntry.content;
-    const hasEmotions = content.match(/[😊😢😲😠🧠😰😌🙏]/);
+    const hasEmotions = content.match(/[😊😢😲😠🧠😰😌🙏]/u);
     const hasStructure = content.includes('##') || content.includes('---');
 
     console.log(`  Content quality checks:`);

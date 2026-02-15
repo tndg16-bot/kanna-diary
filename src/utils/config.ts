@@ -3,7 +3,6 @@
  */
 
 import * as fs from 'fs';
-import * as path from 'path';
 import { Config } from '../types';
 
 export function loadConfig(configPath: string): Config {

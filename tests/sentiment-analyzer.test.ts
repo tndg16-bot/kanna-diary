@@ -32,7 +32,8 @@ const mockConfig: Config = {
   },
   output: {
     saveToFile: false,
-    postToDiscord: false
+    postToDiscord: false,
+    postAsThread: false
   },
   analysis: {
     emotionKeywords: {
@@ -129,7 +130,7 @@ async function runTests() {
   if (!process.env.OPENAI_API_KEY) {
     console.error('❌ OPENAI_API_KEYが設定されていません');
     console.log('テストをスキップします');
-    return;
+    return { passed: 0, failed: 0 };
   }
 
   const analyzer = new SentimentAnalyzer(mockConfig);

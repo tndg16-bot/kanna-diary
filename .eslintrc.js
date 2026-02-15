@@ -13,6 +13,19 @@ module.exports = {
     ecmaVersion: 2020,
     sourceType: 'module',
   },
+  overrides: [
+    {
+      files: ['tests/**/*.ts'],
+      env: {
+        node: true,
+        es2020: true,
+        jest: true,
+      },
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+      },
+    },
+  ],
   rules: {
     '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     '@typescript-eslint/explicit-function-return-type': 'off',
