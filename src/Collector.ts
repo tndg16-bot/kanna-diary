@@ -3,6 +3,7 @@
  */
 
 import { SourceReaderFactory } from './readers/SourceReaderFactory';
+import { SentimentAnalyzer } from './sentiment-analyzer';
 import { Config, SourceData, CollectedData, SourceType } from './types';
 import { Logger } from './utils/logger';
 
@@ -10,6 +11,7 @@ export class Collector {
   private config: Config;
   private logger: Logger;
   private readerFactory: SourceReaderFactory;
+  private sentimentAnalyzer: SentimentAnalyzer;
   
   // 秘書作業に関連するキーワード
   private readonly secretaryKeywords = [
@@ -24,6 +26,7 @@ export class Collector {
     this.config = config;
     this.logger = new Logger();
     this.readerFactory = new SourceReaderFactory(config);
+    this.sentimentAnalyzer = new SentimentAnalyzer(config);
   }
 
   /**
@@ -62,8 +65,8 @@ export class Collector {
     // 重要なイベントを抽出
     const importantEvents = this.extractImportantEvents(filteredData);
 
-    // 感情分析
-    const emotions = this.analyzeEmotions(filteredData);
+    // AIによる感情分析
+    const emotions = await this.sentimentAnalyzer.analyzeEmotions(filteredData);
 
     // コンテキスト生成
     const context = this.generateContext(filteredData, emotions);
@@ -170,7 +173,8 @@ export class Collector {
   }
 
   /**
-   * 感情を分析する
+   * 感情を分析する（非推奨：SentimentAnalyzerを使用してください）
+   * @deprecated SentimentAnalyzer.analyzeEmotionsを使用してください
    */
   private analyzeEmotions(data: SourceData[]): any {
     const emotionCounts: Record<string, number> = {};
