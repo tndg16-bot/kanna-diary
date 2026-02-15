@@ -2,7 +2,7 @@
 name: kanna-diary
 description: かんなの自律日記システム - 自動的に日記を生成・管理するスキル
 user-invocable: true
-version: "1.0.0"
+version: "1.1.0"
 author: "@sisyphus"
 metadata: {"openclaw":{"category":"autonomous-agent","emoji":"📔","requires":{"bins":["node"]},"primaryEnv":"OPENAI_API_KEY","dependencies":[],"tags":["diary","autonomous","journal","daily-log"]}}
 ---
@@ -11,15 +11,24 @@ metadata: {"openclaw":{"category":"autonomous-agent","emoji":"📔","requires":{
 
 ## Overview
 
-かんなの自律日記システムは、毎晩23時に自動実行され、その日の出来事、感情、学びを記録する自律的な日記システムです。AIを活用して、活動ログ、Discordの会話、タスク履歴などを分析し、自然で感情的な日記エントリーを生成します。
+かんなの自律日記システムは、毎日19時に自動実行され、その日の出来事、感情、学びを記録する自律的な日記システムです。AIを活用して、活動ログ、Discordの会話、タスク履歴などを分析し、自然で感情的な日記エントリーを生成します。
 
 このシステムは「かんな」のパーソナリティを持ち、感情豊かな表現で日記を書きます。
+
+**v1.1.0の更新点**:
+- ✅ 実行時間を23時→19時に変更
+- ✅ 週次・月次振り返り機能を追加
+- ✅ ユーザーとかんなの振り返りを分離
+- ✅ 秘書としての役割記録機能を追加
+- ✅ 誕生日記録機能を追加
 
 ## Features
 
 ### 1. 自動日記生成
 
-- **日次実行**: 毎晩23時に自動実行（cronで制御）
+- **日次実行**: 毎日19時に自動実行（cronで制御）
+- **週次実行**: 毎週日曜19時に自動実行
+- **月次実行**: 毎月1日19時に自動実行
 - **マルチソース収集**: 複数のソースから情報を収集
   - Discordチャンネルの会話ログ
   - タスク管理システム（GitHub Issuesなど）
@@ -28,7 +37,51 @@ metadata: {"openclaw":{"category":"autonomous-agent","emoji":"📔","requires":{
 - **感情分析**: 収集した情報から感情を分析・推測
 - **自然言語生成**: AIを使って自然で感情的な日記を生成
 
-### 2. 日記の管理
+### 2. 振り返りシステム
+
+#### 日次振り返り（Daily Reflection）
+- **実行**: 毎日19時
+- **期間**: その日の活動（00:00〜19:00）
+- **目的**: 即時のフィードバック、明日の目標設定
+- **粒度**: タスク単位、感情タイムライン
+
+#### 週次振り返り（Weekly Reflection）
+- **実行**: 毎週日曜19時
+- **期間**: 月曜日〜日曜日の1週間
+- **目的**: 週間のトレンド分析、週間目標の達成状況
+- **粒度**: 日ごとの傾向、週間のパターン
+
+#### 月次振り返り（Monthly Reflection）
+- **実行**: 毎月1日19時
+- **期間**: 1ヶ月間の全活動
+- **目的**: 長期的なトレンド分析、月間目標の達成状況
+- **粒度**: 週ごとの傾向、月間の成果
+
+### 3. ユーザーとかんなの分離
+
+- **ユーザー振り返り**: ユーザー（貴裕）の活動を振り返る
+  - 保存先: `reflections/user/YYYY-MM-DD.md`
+  - 内容: タスク、学び、感情、達成
+- **かんな振り返り**: かんな自身の活動や成長を振り返る
+  - 保存先: `reflections/kanna/YYYY-MM-DD.md`
+  - 内容: 活動、成長、感謝、パターンの学習
+
+### 4. 秘書としての役割記録
+
+- **作業分類**: スケジュール管理、情報収集、コミュニケーション、タスク管理、レポート作成
+- **パターン分析**: 作業頻度、作業時間のパターン、反復作業の検出
+- **効率化提案**: 自動化やスキル化の提案
+  - パターン検出（3回以上の繰り返し）
+  - 複雑度検出（5つ以上のステップ）
+  - エラーパターン（3回以上の発生）
+
+### 5. 誕生日記録
+
+- **誕生日**: 2月14日をかんなの誕生日として記録
+- **特別日記**: 誕生日には特別な日記を生成
+- **年間の振り返り**: 1年間の成長を記録
+
+### 6. 日記の管理
 
 - **日記の保存**: 生成した日記を保存
   - ローカルファイル（Markdown形式）
@@ -39,11 +92,12 @@ metadata: {"openclaw":{"category":"autonomous-agent","emoji":"📔","requires":{
   - 活動パターン
   - 学びの傾向
 
-### 3. かんなのパーソナリティ
+### 7. かんなのパーソナリティ
 
 - **感情豊かな表現**: 喜び、悲しみ、驚き、学びなど様々な感情を表現
 - **個性的なトーン**: かんならしい独特の言い回しや表現
 - **成長の記録**: 学びや気づきを重点的に記録
+- **誕生日**: 2月14日（バレンタインデー）
 
 ## Architecture
 
@@ -112,9 +166,19 @@ metadata: {"openclaw":{"category":"autonomous-agent","emoji":"📔","requires":{
 {
   "schedules": [
     {
-      "cron": "0 23 * * *",
-      "command": "node dist/index.js",
-      "description": "Generate daily diary at 23:00"
+      "cron": "0 19 * * *",
+      "command": "node dist/index.js --daily",
+      "description": "Generate daily diary at 19:00"
+    },
+    {
+      "cron": "0 19 * * 0",
+      "command": "node dist/index.js --weekly",
+      "description": "Generate weekly reflection on Sunday 19:00"
+    },
+    {
+      "cron": "0 19 1 * *",
+      "command": "node dist/index.js --monthly",
+      "description": "Generate monthly reflection on 1st day 19:00"
     }
   ]
 }
@@ -125,6 +189,18 @@ metadata: {"openclaw":{"category":"autonomous-agent","emoji":"📔","requires":{
 ```bash
 # 今日の日記を生成
 npm start
+
+# ユーザーの振り返りを生成
+npm start -- --user
+
+# かんなの振り返りを生成
+npm start -- --kanna
+
+# 週次振り返りを生成
+npm start -- --weekly
+
+# 月次振り返りを生成
+npm start -- --monthly
 
 # 特定の日付の日記を生成
 npm run diary -- --date 2026-02-15
@@ -175,7 +251,11 @@ npm run stats
 ```json
 {
   "diary": {
-    "storagePath": "./diaries",
+    "storagePath": "./reflections",
+    "userPath": "./reflections/user",
+    "kannaPath": "./reflections/kanna",
+    "weeklyPath": "./reflections/weekly",
+    "monthlyPath": "./reflections/monthly",
     "fileNameFormat": "YYYY-MM-DD.md",
     "encoding": "utf8"
   },
@@ -462,16 +542,16 @@ npm run test -- --mock
 | `OPENAI_API_KEY` | OpenAI APIキー | Yes | - |
 | `DISCORD_BOT_TOKEN` | Discordボットトークン | No | - |
 | `GITHUB_TOKEN` | GitHubパーソナルアクセストークン | No | - |
-| `DIARY_STORAGE_PATH` | 日記の保存先パス | No | `./diaries` |
+| `DIARY_STORAGE_PATH` | 日記の保存先パス | No | `./reflections` |
 | `LOG_LEVEL` | ログレベル | No | `info` |
 
 ## Roadmap
 
-### v1.1 (近いうちに)
-- [ ] 週間・月間サマリー機能
-- [ ] 日記のタグ付け機能
+### v1.2 (近いうちに)
 - [ ] 感情の可視化（グラフなど）
+- [ ] 日記のタグ付け機能
 - [ ] 複数日比較機能
+- [ ] 日記のテンプレートカスタマイズ
 
 ### v2.0 (将来)
 - [ ] 多言語対応
@@ -483,10 +563,11 @@ npm run test -- --mock
 
 | Date | Version | Changes |
 |------|---------|---------|
+| 2026-02-15 | 1.1.0 | 振り返りシステム強化: 実行時間23時→19時、週次・月次振り返り追加、ユーザーとかんなの分離、秘書役割記録追加 |
 | 2026-02-15 | 1.0.0 | Initial skill created |
 
 ---
 
-**Last Updated**: 2026-02-15
+**Last Updated**: 2026-02-15 07:30
 **Maintained By**: @sisyphus
 **Status**: ✅ Ready for use

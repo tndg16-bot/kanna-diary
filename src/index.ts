@@ -8,9 +8,13 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import * as dotenv from 'dotenv';
 import { KannaDiary } from './KannaDiary';
 import { loadConfig } from './utils/config';
 import { Logger } from './utils/logger';
+
+// .envファイルをロード
+dotenv.config();
 
 const logger = new Logger();
 

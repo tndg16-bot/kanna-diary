@@ -64,12 +64,76 @@ export class Writer {
    */
   private async postToDiscord(entry: DiaryEntry): Promise<void> {
     try {
-      // TODO: Discord APIを実装
-      this.logger.info('📤 Discordへの投稿（TODO: 実装待ち）');
+      // スレッド機能が有効な場合はスレッドを作成
+      if (this.config.output.postAsThread) {
+        await this.postAsThread(entry);
+      } else {
+        await this.postMessage(entry);
+      }
     } catch (error) {
       this.logger.warn(`Discord投稿中にエラーが発生しました: ${error}`);
       // Discord投稿に失敗してもファイル保存は成功したと見なす
     }
+  }
+
+  /**
+   * スレッドとして投稿する
+   */
+  private async postAsThread(entry: DiaryEntry): Promise<void> {
+    const channelId = this.config.output.discordChannelId;
+    if (!channelId) {
+      this.logger.warn('DiscordチャンネルIDが設定されていません');
+      return;
+    }
+
+    // スレッド名を生成
+    const threadName = `📔 ${this.formatDate(entry.date)} - かんなの日記`;
+
+    // 日記の最初の部分を抽出（スレッドの最初のメッセージとして使用）
+    const firstPart = this.extractFirstPart(entry.content);
+
+    // Discordにスレッドを作成して投稿
+    // TODO: Discord Bot APIを実装
+    this.logger.info(`📤 Discordスレッド「${threadName}」を作成して投稿します（TODO: 実装待ち）`);
+  }
+
+  /**
+   * メッセージとして投稿する（スレッドなし）
+   */
+  private async postMessage(entry: DiaryEntry): Promise<void> {
+    const channelId = this.config.output.discordChannelId;
+    if (!channelId) {
+      this.logger.warn('DiscordチャンネルIDが設定されていません');
+      return;
+    }
+
+    // 日記の内容を投稿
+    // TODO: Discord Bot APIを実装
+    this.logger.info('📤 Discordへの投稿（TODO: 実装待ち）');
+  }
+
+  /**
+   * 日記の最初の部分を抽出
+   */
+  private extractFirstPart(content: string): string {
+    const lines = content.split('\n');
+    let firstPart = '';
+    let inHeader = false;
+
+    for (const line of lines) {
+      if (line.startsWith('##')) {
+        if (inHeader) {
+          break;
+        }
+        inHeader = true;
+      }
+      firstPart += line + '\n';
+      if (firstPart.length > 500) {
+        break;
+      }
+    }
+
+    return firstPart.trim();
   }
 
   /**

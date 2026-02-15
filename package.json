@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node index.js",
     "preview": "node index.js --preview",
-    "test": "node test.js"
+    "test": "node test.js",
+    "generate:weekly": "npx ts-node --transpile-only src/WeeklyReflection.ts",
+    "generate:monthly": "npx ts-node --transpile-only src/MonthlyReflection.ts"
   },
   "keywords": [
     "diary",

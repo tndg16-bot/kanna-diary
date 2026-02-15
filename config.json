@@ -11,7 +11,7 @@
   },
   "sources": {
     "discord": {
-      "enabled": false,
+      "enabled": true,
       "channels": [
         "1471769660948086785",
         "1472255948411375649"
@@ -35,9 +35,9 @@
     }
   },
   "generation": {
-    "aiModel": "zai/glm-4.7",
-    "maxTokens": 2000,
-    "temperature": 0.8,
+    "aiModel": "glm-4-0520",
+    "maxTokens": 2500,
+    "temperature": 0.9,
     "personality": {
       "name": "かんな",
       "tone": "friendly",
@@ -46,7 +46,8 @@
   },
   "output": {
     "saveToFile": true,
-    "postToDiscord": false,
+    "postToDiscord": true,
+    "postAsThread": true,
     "discordChannelId": "1472332732595044544"
   },
   "analysis": {

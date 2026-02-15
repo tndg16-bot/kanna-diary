@@ -82,6 +82,68 @@ export class Collector {
   }
 
   /**
+   * 日付範囲でデータを収集する（週次・月次用）
+   */
+  async collectRange(startDate: Date, endDate: Date): Promise<CollectedData> {
+    const allSources: SourceData[] = [];
+    const currentDate = new Date(startDate);
+
+    // 各日を順に処理
+    while (currentDate <= endDate) {
+      // 各ソースからデータを収集
+      if (this.config.sources.discord.enabled) {
+        const discordData = await this.collectFromSource(SourceType.Discord, currentDate);
+        allSources.push(...discordData);
+      }
+
+      if (this.config.sources.github.enabled) {
+        const githubData = await this.collectFromSource(SourceType.GitHub, currentDate);
+        allSources.push(...githubData);
+      }
+
+      if (this.config.sources.calendar.enabled) {
+        const calendarData = await this.collectFromSource(SourceType.Calendar, currentDate);
+        allSources.push(...calendarData);
+      }
+
+      if (this.config.sources.obsidian.enabled) {
+        const obsidianData = await this.collectFromSource(SourceType.Obsidian, currentDate);
+        allSources.push(...obsidianData);
+      }
+
+      // 次の日に進む
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // データをフィルタリング
+    const filteredData = this.filterData(allSources);
+
+    // 重要度をスコアリング
+    this.scoreData(filteredData);
+
+    // 重要なイベントを抽出
+    const importantEvents = this.extractImportantEvents(filteredData);
+
+    // 感情分析
+    const emotions = this.analyzeEmotions(filteredData);
+
+    // コンテキスト生成
+    const context = this.generateContext(filteredData, emotions);
+
+    // 秘書としての役割を分析
+    const secretaryRole = this.analyzeSecretaryRole(filteredData);
+
+    return {
+      date: startDate,
+      sources: filteredData,
+      importantEvents,
+      emotions,
+      context,
+      secretaryRole
+    };
+  }
+
+  /**
    * 特定のソースからデータを収集する
    */
   private async collectFromSource(type: SourceType, date: Date): Promise<SourceData[]> {
